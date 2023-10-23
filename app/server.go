@@ -84,6 +84,7 @@ func handleEcho(r *HttpRequest, c net.Conn) {
 	pattern := regexp.MustCompile(`/echo/(.*)`)
 	param := pattern.Find([]byte(r.path))
 	headers := strings.Join([]string{"Content-Type: text/plain", fmt.Sprintf("Content-Length: %d", len(param))}, "\r\n")
-	res := HTTP_OK + headers + fmt.Sprintf("\r\n%s", param)
+	res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", param)
+	fmt.Print(string(fmt.Sprintf(`%q`, res)))
 	c.Write([]byte(res))
 }
