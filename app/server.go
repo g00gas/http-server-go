@@ -59,11 +59,11 @@ func main() {
 	req := returnHttpRequest(buffer)
 	switch {
 	case matchRoute(req.path, `/`):
-		connection.Write([]byte(HTTP_OK))
+		connection.Write([]byte(HTTP_OK + "\r\n"))
 	case matchRoute(req.path, `\/echo(\/.*)`):
 		handleEcho(&req, connection)
 	default:
-		connection.Write([]byte(HTTP_NOT_FOUND))
+		connection.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 	}
 
 	connection.Close()
