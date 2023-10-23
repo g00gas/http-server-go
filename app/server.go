@@ -33,8 +33,8 @@ func returnHttpRequest(reqBuffer []byte) HttpRequest {
 }
 
 const (
-	HTTP_OK        = "HTTP/1.1 200 OK\r\n\r\n"
-	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n\r\n"
+	HTTP_OK        = "HTTP/1.1 200 OK\r\n"
+	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n"
 )
 
 func main() {
@@ -84,7 +84,6 @@ func handleEcho(r *HttpRequest, c net.Conn) {
 	pattern := regexp.MustCompile(`/echo/(.*)`)
 	param := pattern.Find([]byte(r.path))
 	headers := strings.Join([]string{"Content-Type: text/plain", fmt.Sprintf("Content-Length: %d", len(param))}, "\r\n")
-	fmt.Println(headers)
 	res := HTTP_OK + headers + fmt.Sprintf("\r\n%s", param)
 	c.Write([]byte(res))
 }
