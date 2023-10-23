@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	// Uncomment this block to pass the first stage
@@ -31,6 +32,11 @@ func returnHttpRequest(reqBuffer []byte) HttpRequest {
 	return reqObject
 }
 
+const (
+	HTTP_OK        = "HTTP/1.1 200 OK\r\n\r\n"
+	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n\r\n"
+)
+
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
@@ -51,14 +57,40 @@ func main() {
 		fmt.Println("error reading connection ", err.Error())
 		os.Exit(1)
 	}
+
 	req := returnHttpRequest(buffer)
-	switch req.path {
-	case "/":
-		connection.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	switch {
+	case matchRoute(req.path, `\/echo(\/.*)`):
+		handleEcho(&req, connection)
+	case matchRoute(req.path, `/`):
+		connection.Write([]byte(HTTP_OK))
 	default:
-		connection.Write([]byte("HTTP/1.1 404 NOT FOUND\r\n\r\n"))
+		connection.Write([]byte(HTTP_NOT_FOUND))
 	}
 
 	connection.Close()
 
+}
+
+func matchRoute(requestPath, pattern string) bool {
+	fmt.Println("Request path", requestPath)
+	fmt.Println("Pattern", pattern)
+	regex := regexp.MustCompile(pattern)
+	match := regex.FindStringSubmatch(requestPath)
+	for _, match := range match {
+		fmt.Print(string(match))
+	}
+	if match != nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+func handleEcho(r *HttpRequest, c net.Conn) {
+	pattern := regexp.MustCompile(`/echo/(.*)`)
+	param := pattern.Find([]byte(r.path))
+	headers := strings.Join([]string{"Content-Type: text/plain", fmt.Sprintf("Content-Length: %d", len(param))}, "\r\n")
+	res := HTTP_OK + headers + fmt.Sprintf("\r\n%s", param)
+	c.Write([]byte(res))
 }
