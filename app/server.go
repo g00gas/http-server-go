@@ -38,8 +38,6 @@ const (
 )
 
 func main() {
-	fmt.Println("Logs from your program will appear here!")
-
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
@@ -60,10 +58,10 @@ func main() {
 
 	req := returnHttpRequest(buffer)
 	switch {
-	case matchRoute(req.path, `\/echo(\/.*)`):
-		handleEcho(&req, connection)
 	case matchRoute(req.path, `/`):
 		connection.Write([]byte(HTTP_OK))
+	case matchRoute(req.path, `\/echo(\/.*)`):
+		handleEcho(&req, connection)
 	default:
 		connection.Write([]byte(HTTP_NOT_FOUND))
 	}
@@ -73,13 +71,8 @@ func main() {
 }
 
 func matchRoute(requestPath, pattern string) bool {
-	fmt.Println("Request path", requestPath)
-	fmt.Println("Pattern", pattern)
-	regex := regexp.MustCompile(pattern)
+	regex := regexp.MustCompile("^" + pattern + "$")
 	match := regex.FindStringSubmatch(requestPath)
-	for _, match := range match {
-		fmt.Print(string(match))
-	}
 	if match != nil {
 		return true
 	} else {
