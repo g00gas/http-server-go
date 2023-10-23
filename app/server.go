@@ -82,9 +82,10 @@ func matchRoute(requestPath, pattern string) bool {
 
 func handleEcho(r *HttpRequest, c net.Conn) {
 	pattern := regexp.MustCompile(`/echo/(.*)`)
-	param := pattern.Find([]byte(r.path))
-	headers := strings.Join([]string{"Content-Type: text/plain", fmt.Sprintf("Content-Length: %d", len(param))}, "\r\n")
-	res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", param)
-	fmt.Print(string(fmt.Sprintf(`%q`, res)))
-	c.Write([]byte(res))
+	param := pattern.FindStringSubmatch(r.path)
+	if len(param) > 1 {
+		headers := strings.Join([]string{"Content-Type: text/plain", fmt.Sprintf("Content-Length: %d", len(param[1]))}, "\r\n")
+		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", param[1])
+		c.Write([]byte(res))
+	}
 }
