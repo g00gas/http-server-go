@@ -127,7 +127,7 @@ func handleFiles(r *HttpRequest, c net.Conn) {
 		path := fmt.Sprintf("%s%s", dir, param)
 		file, err := os.Open(path)
 		if err != nil {
-			c.Write([]byte(HTTP_NOT_FOUND + "\r\n" + err.Error()))
+			c.Write([]byte(HTTP_NOT_FOUND + "\r\n" + fmt.Sprintf("\r\n\r\n%s", fmt.Sprint(err))))
 		}
 		defer file.Close()
 		buffer, err := io.ReadAll(file)
