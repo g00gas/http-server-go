@@ -123,6 +123,7 @@ func handleFiles(r *HttpRequest, c net.Conn) {
 	dir := *getArgs()
 	pattern := regexp.MustCompile(`/file/(.*)`)
 	param := pattern.FindStringSubmatch(r.path)[1]
+	fmt.Printf(fmt.Sprintf("%s/%s", dir, param))
 	if len(param) > 1 {
 		path := fmt.Sprintf("%s/%s", dir, param)
 		file, err := os.Open(path)
