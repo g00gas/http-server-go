@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 
@@ -57,6 +59,8 @@ func handleConnection(c net.Conn) {
 		handleEcho(&req, c)
 	case matchRoute(req.path, `\/user-agent`):
 		handleUserAgent(&req, c)
+	case matchRoute(req.path, `\/file(\/.*)`):
+		handleFiles(&req, c)
 	default:
 		c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 	}
@@ -64,6 +68,7 @@ func handleConnection(c net.Conn) {
 }
 
 func main() {
+
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
@@ -112,4 +117,32 @@ func handleUserAgent(r *HttpRequest, c net.Conn) {
 		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", agent)
 		c.Write([]byte(res))
 	}
+}
+
+func handleFiles(r *HttpRequest, c net.Conn) {
+	dir := *getArgs()
+	pattern := regexp.MustCompile(`/file/(.*)`)
+	param := pattern.FindStringSubmatch(r.path)[1]
+	if len(param) > 1 {
+		path := fmt.Sprintf("%s/%s", dir, param)
+		file, err := os.Open(path)
+		if err != nil {
+			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
+		}
+		defer file.Close()
+		buffer, err := io.ReadAll(file)
+		if err != nil {
+			fmt.Println("cannot read file")
+		}
+		content := string(buffer)
+		headers := strings.Join([]string{"Content-Type: application/octet-stream", fmt.Sprintf("Content-Length: %d", len(content))}, "\r\n")
+		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", content)
+		c.Write([]byte(res))
+	}
+}
+
+func getArgs() *string {
+	dir := flag.String("directory", "./", "Directory to get files from")
+	flag.Parse()
+	return dir
 }
