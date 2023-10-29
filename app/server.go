@@ -123,11 +123,13 @@ func handleFiles(r *HttpRequest, c net.Conn) {
 	dir := *getArgs()
 	pattern := regexp.MustCompile(`/file/(.*)`)
 	param := pattern.FindStringSubmatch(r.path)[1]
+	fmt.Printf(fmt.Sprintf("%s%s", dir, param))
 	if len(param) > 1 {
 		path := fmt.Sprintf("%s%s", dir, param)
 		file, err := os.Open(path)
 		if err != nil {
-			c.Write([]byte(HTTP_NOT_FOUND + "\r\n" + fmt.Sprintf("\r\n\r\n%s", fmt.Sprint(err))))
+			errorMessage := fmt.Sprintf("File not found: %v", err)
+			c.Write([]byte(HTTP_NOT_FOUND + errorMessage + "\r\n"))
 		}
 		defer file.Close()
 		buffer, err := io.ReadAll(file)
