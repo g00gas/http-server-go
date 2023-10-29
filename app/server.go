@@ -43,7 +43,7 @@ const (
 	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n"
 )
 
-func handleConnection(c net.Conn) {
+func handleConnection(c net.Conn, dir string) {
 
 	buffer := make([]byte, 512)
 	_, err := c.Read(buffer)
@@ -60,7 +60,7 @@ func handleConnection(c net.Conn) {
 	case matchRoute(req.path, `\/user-agent`):
 		handleUserAgent(&req, c)
 	case matchRoute(req.path, `\/files(\/.*)`):
-		handleFiles(&req, c)
+		handleFiles(&req, c, dir)
 	default:
 		c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 	}
@@ -68,6 +68,7 @@ func handleConnection(c net.Conn) {
 }
 
 func main() {
+	dir := *getArgs()
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
@@ -81,11 +82,11 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		go func(c net.Conn) {
-			handleConnection(c)
+		go func(c net.Conn, dir string) {
+			handleConnection(c, dir)
 			connection.Close()
 
-		}(connection)
+		}(connection, dir)
 	}
 
 }
@@ -119,8 +120,7 @@ func handleUserAgent(r *HttpRequest, c net.Conn) {
 	}
 }
 
-func handleFiles(r *HttpRequest, c net.Conn) {
-	dir := *getArgs()
+func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 	pattern := regexp.MustCompile(`/files/(.*)`)
 	param := pattern.FindStringSubmatch(r.path)[1]
 	if len(param) > 1 {
