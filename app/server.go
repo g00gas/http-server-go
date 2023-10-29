@@ -41,6 +41,28 @@ const (
 	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n"
 )
 
+func handleConnection(c net.Conn) {
+
+	buffer := make([]byte, 512)
+	_, err := c.Read(buffer)
+	if err != nil {
+		fmt.Println("error reading c ", err.Error())
+		os.Exit(1)
+	}
+	req := returnHttpRequest(buffer)
+	switch {
+	case matchRoute(req.path, `/`):
+		c.Write([]byte(HTTP_OK + "\r\n"))
+	case matchRoute(req.path, `\/echo(\/.*)`):
+		handleEcho(&req, c)
+	case matchRoute(req.path, `\/user-agent`):
+		handleUserAgent(&req, c)
+	default:
+		c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
+	}
+
+}
+
 func main() {
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
@@ -48,30 +70,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	connection, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
-	buffer := make([]byte, 512)
-	_, err = connection.Read(buffer)
-	if err != nil {
-		fmt.Println("error reading connection ", err.Error())
-		os.Exit(1)
-	}
-	req := returnHttpRequest(buffer)
-	switch {
-	case matchRoute(req.path, `/`):
-		connection.Write([]byte(HTTP_OK + "\r\n"))
-	case matchRoute(req.path, `\/echo(\/.*)`):
-		handleEcho(&req, connection)
-	case matchRoute(req.path, `\/user-agent`):
-		handleUserAgent(&req, connection)
-	default:
-		connection.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
-	}
+	for {
+		connection, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+		go func(c net.Conn) {
+			handleConnection(c)
+			connection.Close()
 
-	connection.Close()
+		}(connection)
+	}
 
 }
 
