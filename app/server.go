@@ -14,7 +14,7 @@ type HttpRequest struct {
 	httpVersion string
 	method      string
 	path        string
-	headers     []string
+	headers     map[string]string
 }
 
 func returnHttpRequest(reqBuffer []byte) HttpRequest {
@@ -24,9 +24,13 @@ func returnHttpRequest(reqBuffer []byte) HttpRequest {
 	reqObject.method = startLine[0]
 	reqObject.path = startLine[1]
 	reqObject.httpVersion = startLine[2]
-	for _, header := range reqArray[3:] {
+	reqObject.headers = make(map[string]string)
+	for _, header := range reqArray[1:] {
 		if header != "" {
-			reqObject.headers = append(reqObject.headers, header)
+			v := strings.Split(header, ": ")
+			if len(v) > 1 {
+				reqObject.headers[v[0]] = v[1]
+			}
 		}
 	}
 	return reqObject
@@ -55,13 +59,14 @@ func main() {
 		fmt.Println("error reading connection ", err.Error())
 		os.Exit(1)
 	}
-
 	req := returnHttpRequest(buffer)
 	switch {
 	case matchRoute(req.path, `/`):
 		connection.Write([]byte(HTTP_OK + "\r\n"))
 	case matchRoute(req.path, `\/echo(\/.*)`):
 		handleEcho(&req, connection)
+	case matchRoute(req.path, `\/user-agent`):
+		handleUserAgent(&req, connection)
 	default:
 		connection.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 	}
@@ -86,6 +91,15 @@ func handleEcho(r *HttpRequest, c net.Conn) {
 	if len(param) > 1 {
 		headers := strings.Join([]string{"Content-Type: text/plain", fmt.Sprintf("Content-Length: %d", len(param[1]))}, "\r\n")
 		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", param[1])
+		c.Write([]byte(res))
+	}
+}
+
+func handleUserAgent(r *HttpRequest, c net.Conn) {
+	agent := r.headers["User-Agent"]
+	if len(agent) > 1 {
+		headers := strings.Join([]string{"Content-Type: text/plain", fmt.Sprintf("Content-Length: %d", len(agent))}, "\r\n")
+		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", agent)
 		c.Write([]byte(res))
 	}
 }
