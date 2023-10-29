@@ -59,7 +59,7 @@ func handleConnection(c net.Conn) {
 		handleEcho(&req, c)
 	case matchRoute(req.path, `\/user-agent`):
 		handleUserAgent(&req, c)
-	case matchRoute(req.path, `\/file(\/.*)`):
+	case matchRoute(req.path, `\/files(\/.*)`):
 		handleFiles(&req, c)
 	default:
 		c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
@@ -121,15 +121,13 @@ func handleUserAgent(r *HttpRequest, c net.Conn) {
 
 func handleFiles(r *HttpRequest, c net.Conn) {
 	dir := *getArgs()
-	pattern := regexp.MustCompile(`/file/(.*)`)
+	pattern := regexp.MustCompile(`/files/(.*)`)
 	param := pattern.FindStringSubmatch(r.path)[1]
-	fmt.Printf(fmt.Sprintf("%s%s", dir, param))
 	if len(param) > 1 {
-		path := fmt.Sprintf("%s%s", dir, param)
+		path := fmt.Sprintf("%s/%s", dir, param)
 		file, err := os.Open(path)
 		if err != nil {
-			errorMessage := fmt.Sprintf("File not found: %v", err)
-			c.Write([]byte(HTTP_OK + errorMessage + "\r\n"))
+			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 		}
 		defer file.Close()
 		buffer, err := io.ReadAll(file)
