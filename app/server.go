@@ -129,7 +129,7 @@ func handleFiles(r *HttpRequest, c net.Conn) {
 		file, err := os.Open(path)
 		if err != nil {
 			errorMessage := fmt.Sprintf("File not found: %v", err)
-			c.Write([]byte(HTTP_NOT_FOUND + errorMessage + "\r\n"))
+			c.Write([]byte(HTTP_OK + errorMessage + "\r\n"))
 		}
 		defer file.Close()
 		buffer, err := io.ReadAll(file)
