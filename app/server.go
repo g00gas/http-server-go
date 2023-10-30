@@ -154,6 +154,9 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 		}
 		content := []byte(r.body)
 		fmt.Println(string(content))
+		for _, b := range content {
+			fmt.Println(string(b))
+		}
 		_, err = file.Write(content)
 		if err != nil {
 			fmt.Println("error writing content")
