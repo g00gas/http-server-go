@@ -146,12 +146,14 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", content)
 		c.Write([]byte(res))
 	case "POST":
+		fmt.Println("Post firing")
 		file, err := os.Create(path)
 		defer file.Close()
 		if err != nil {
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 		}
 		content := []byte(r.body)
+		fmt.Println(content)
 		_, err = file.Write(content)
 		if err != nil {
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
