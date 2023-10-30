@@ -15,7 +15,7 @@ import (
 const (
 	HTTP_OK        = "HTTP/1.1 200 OK\r\n"
 	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n"
-	HTTP_CREATED   = "HTTP/1.1 201 CREATED"
+	HTTP_CREATED   = "HTTP/1.1 201 CREATED\r\n"
 )
 
 type HttpRequest struct {
@@ -146,7 +146,6 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", content)
 		c.Write([]byte(res))
 	case "POST":
-		fmt.Println("Post firing")
 		file, err := os.Create(path)
 		defer file.Close()
 		if err != nil {
@@ -157,7 +156,7 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 		if err != nil {
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 		}
-		c.Write([]byte(HTTP_OK + "\r\n"))
+		c.Write([]byte(HTTP_CREATED + "\r\n"))
 
 	}
 }
