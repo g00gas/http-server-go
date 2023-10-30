@@ -43,7 +43,9 @@ func returnHttpRequest(reqBuffer []byte) HttpRequest {
 		}
 	}
 	reqObject.body = reqArray[len(reqArray)-1]
-	fmt.Println(reqArray)
+	for _, s := range reqArray {
+		fmt.Println(s)
+	}
 	return reqObject
 }
 
