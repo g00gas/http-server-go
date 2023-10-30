@@ -43,7 +43,6 @@ func returnHttpRequest(reqBuffer []byte) HttpRequest {
 		}
 	}
 	reqObject.body = reqArray[len(reqArray)-1]
-	fmt.Println("BODY", reqObject.body)
 	return reqObject
 }
 
@@ -153,14 +152,11 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 		if err != nil {
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 		}
-		fmt.Println(r.body)
 		content := []byte(r.body)
 		_, err = file.Write(content)
 		if err != nil {
-			fmt.Println("error writing content")
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 		}
-		fmt.Println("writing response")
 		c.Write([]byte(HTTP_CREATED + "\r\n"))
 
 	}
