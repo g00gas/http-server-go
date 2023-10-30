@@ -156,6 +156,7 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 		fmt.Println(string(content))
 		_, err = file.Write(content)
 		if err != nil {
+			fmt.Println("error writing content")
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 		}
 		fmt.Println("writing response")
