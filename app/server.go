@@ -12,11 +12,18 @@ import (
 	"os"
 )
 
+const (
+	HTTP_OK        = "HTTP/1.1 200 OK\r\n"
+	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n"
+	HTTP_CREATED   = "HTTP/1.1 201 CREATED"
+)
+
 type HttpRequest struct {
 	httpVersion string
 	method      string
 	path        string
 	headers     map[string]string
+	body        string
 }
 
 func returnHttpRequest(reqBuffer []byte) HttpRequest {
@@ -35,20 +42,15 @@ func returnHttpRequest(reqBuffer []byte) HttpRequest {
 			}
 		}
 	}
+	reqObject.body = reqArray[len(reqArray)-1]
 	return reqObject
 }
-
-const (
-	HTTP_OK        = "HTTP/1.1 200 OK\r\n"
-	HTTP_NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n"
-)
 
 func handleConnection(c net.Conn, dir string) {
 
 	buffer := make([]byte, 512)
 	_, err := c.Read(buffer)
 	if err != nil {
-		fmt.Println("error reading c ", err.Error())
 		os.Exit(1)
 	}
 	req := returnHttpRequest(buffer)
@@ -123,8 +125,13 @@ func handleUserAgent(r *HttpRequest, c net.Conn) {
 func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 	pattern := regexp.MustCompile(`/files/(.*)`)
 	param := pattern.FindStringSubmatch(r.path)[1]
-	if len(param) > 1 {
-		path := fmt.Sprintf("%s/%s", dir, param)
+	path := fmt.Sprintf("%s/%s", dir, param)
+	if path == "" {
+		c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
+		return
+	}
+	switch r.method {
+	case "GET":
 		file, err := os.Open(path)
 		if err != nil {
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
@@ -138,6 +145,18 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 		headers := strings.Join([]string{"Content-Type: application/octet-stream", fmt.Sprintf("Content-Length: %d", len(content))}, "\r\n")
 		res := HTTP_OK + headers + fmt.Sprintf("\r\n\r\n%s", content)
 		c.Write([]byte(res))
+	case "POST":
+		file, err := os.Create(path)
+		defer file.Close()
+		if err != nil {
+			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
+		}
+		content := []byte(r.body)
+		_, err = file.Write(content)
+		if err != nil {
+			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
+		}
+		c.Write([]byte(HTTP_CREATED + "\r\n"))
 	}
 }
 
