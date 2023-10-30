@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -152,6 +153,7 @@ func handleFiles(r *HttpRequest, c net.Conn, dir string) {
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
 		}
 		content := []byte(r.body)
+		content = bytes.Trim(content, "\x00")
 		_, err = file.Write(content)
 		if err != nil {
 			c.Write([]byte(HTTP_NOT_FOUND + "\r\n"))
